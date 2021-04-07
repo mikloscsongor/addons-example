@@ -2,7 +2,7 @@
 
 ## 1.12.5
 
-- Fix bug causing DuckDNS to return KO, when aliases were configured
+- Fix IPv6 detection & allow skipping IPv4
 
 ## 1.12.4
 

@@ -5,7 +5,10 @@
   "description": "Free Dynamic DNS (DynDNS or DDNS) service with Let's Encrypt support",
   "url": "https://github.com/home-assistant/hassio-addons/tree/master/duckdns",
   "arch": ["armhf", "armv7", "aarch64", "amd64", "i386"],
+  "hassio_api": true,
+  "hassio_role": "manager",
   "startup": "services",
+  "boot": "auto",
   "map": ["ssl:rw"],
   "options": {
     "lets_encrypt": {
@@ -27,7 +30,7 @@
     "ipv4": "str?",
     "ipv6": "str?",
     "token": "str",
-    "domains": ["match(.+\\.duckdns\\.org)"],
+    "domains": ["str"],
     "aliases": [
       {"domain": "str", "alias": "str"}
     ],

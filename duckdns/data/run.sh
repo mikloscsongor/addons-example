@@ -16,23 +16,12 @@ WAIT_TIME=$(bashio::config 'seconds')
 # Function that performe a renew
 function le_renew() {
     local domain_args=()
-    local domains=''
-    local aliases=''
+    local domains
 
     domains=$(bashio::config 'domains')
 
     # Prepare domain for Let's Encrypt
     for domain in ${domains}; do
-        for alias in $(jq --raw-output --exit-status "[.aliases[]|{(.alias):.domain}]|add.\"${domain}\" | select(. != null)" /data/options.json) ; do
-            aliases="${aliases} ${alias}"
-        done
-    done
-
-    aliases="$(echo "${aliases}" | tr ' ' '\n' | sort | uniq)"
-
-    bashio::log.info "Renew certificate for domains: $(echo -n "${domains}") and aliases: $(echo -n "${aliases}")"
-
-    for domain in $(echo "${domains}" "${aliases}" | tr ' ' '\n' | sort | uniq); do
         domain_args+=("--domain" "${domain}")
     done
 
@@ -64,19 +53,31 @@ fi
 # Run duckdns
 while true; do
 
-    [[ ${IPV4} != *:/* ]] && ipv4=${IPV4} || ipv4=$(curl -s -m 10 "${IPV4}")
-    [[ ${IPV6} != *:/* ]] && ipv6=${IPV6} || ipv6=$(curl -s -m 10 "${IPV6}")
+    # ipv4
+    if [[ ${IPV4} == "none" ]]; then # if none, don't update ipv4 entry
+        ipv4=""
+    elif [[ ${IPV4} != *:/* ]]; then # if not a URL, use as-is
+        ipv4="&ip=${IPV4}"
+    else
+        ipv4="&ip=$(curl -s -m 10 "${IPV4}")"
+    fi
+    # ipv6
+    if [[ ${IPV6} == *:*:* ]]; then
+        ipv6="&ipv6=${IPV6}"
+    else
+        ipv6="&ipv6=$(bashio::network.ipv6_address "${IPV6}" | head -n1 | cut -d/ -f1)" || ipv6=""
+    fi
 
-    if answer="$(curl -s "https://www.duckdns.org/update?domains=${DOMAINS}&token=${TOKEN}&ip=${ipv4}&ipv6=${ipv6}&verbose=true")" && [ "${answer}" != 'KO' ]; then
+    if answer="$(curl -s "https://www.duckdns.org/update?domains=${DOMAINS}&token=${TOKEN}${ipv4}${ipv6}&verbose=true")"; then
         bashio::log.info "${answer}"
     else
         bashio::log.warning "${answer}"
     fi
-    
+
     now="$(date +%s)"
     if bashio::config.true 'lets_encrypt.accept_terms' && [ $((now - LE_UPDATE)) -ge 43200 ]; then
         le_renew
     fi
-    
+
     sleep "${WAIT_TIME}"
 done
