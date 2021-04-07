@@ -1,5 +1,5 @@
 {
   "name": "My Example Add-on Repository",
-  "url": "homeassistant.local:8123",
-  "maintainer": "Csongor <mikloscsongor@gmail.com>"
+  "url": "http://www.google.com",
+  "maintainer": "Csongor Miklos <mikloscsongor@gmail.com>"
 }
